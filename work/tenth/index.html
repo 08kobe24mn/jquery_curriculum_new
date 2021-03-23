@@ -87,6 +87,42 @@
       //     <a class="btn-item" data-js="page-next" href="">次へ</a>
       //   </div>
       // </div>
+      $(function() {
+        $('.search__btn').click(function() {
+          var search = $('.search__text__input').val();
+          console.log(search);
+          $.ajax({
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?[parameter]=[value]…',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+              applicationId: appId,
+              keyword: search,
+              booksGernreId: '001',
+              hits: '20',
+              page: '1',
+            }
+          }).done(function(data) {
+            console.log(data);
+            $.each(data, function(index, value) {
+              $('.lists').html(function() {
+              '<li class="lists__item">'
+                '<div class="lists__item__inner">'
+                  '<a href="' + itemUrl + '" class="lists__item__link" target="_blank">'
+                    '<img src="' + value.smallImageUrl + '" class="lists__item__img" alt="商品画像">'
+                    '<p class="lists__item__detail">作品名：' + value.title + '</p>'
+                    '<p class="lists__item__detail">作者　：' + value.author + '</p>'
+                    '<p class="lists__item__detail">出版社：' + value.publisherName + '</p>'
+                  '</a>'
+                '</div>'
+              '</li>'
+              })
+
+              console.log(value.title);
+            })
+          })
+        })
+      })
     </script>
   </body>
 </html>
