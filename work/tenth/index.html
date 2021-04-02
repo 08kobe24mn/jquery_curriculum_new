@@ -93,12 +93,17 @@
     $(function () {
       
       $('.search__btn').on('click', function () {
-        $('ul').empty();
+        pageEmpty();
         var search = $('.search__text__input').val();
         var current = 1;
         var hits = 20;
         getDataBooks(search, hits, current);
       })
+
+      function pageEmpty() {
+        $('ul').empty();
+        $('.message').empty();
+      }
 
       function getDataBooks(keyword, hits, page) {
         $.ajax({
@@ -112,23 +117,23 @@
             page: page
           }
         }).done(function (data) {
-          console.log(data);
           success(data);
           if (data.pageCount > 1) {
             pagination(data);
-            $('a').on('click', function (e) {
-              e.preventDefault();
-            })
             pageMove(keyword, hits, page);
             pageDisabled(page, data);
           }
           if (data.count === 0) {
             dataNone();
           }
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-          badRequest();
-          overRequest();
-          networkError();
+        }).fail(function(error) {
+          if (error.status === 400) {
+            badRequest();
+          } else if (error.status === 429) {
+            overRequest();
+          } else if (error.status === 0) {
+            networkError();
+          }
         })
       }
 
@@ -166,8 +171,9 @@
       }
 
       function pageMove(keyword, hits, page) {
-        $('.btn-item').on('click', function() {
-          $('ul').empty();
+        $('.btn-item').on('click', function(e) {
+          pageEmpty();
+          e.preventDefault();
           if ($(this).data('js') === 'page-prev') {
             pagePrev(keyword, hits, page);
           } else if ($(this).data('js') === 'page-next') {
@@ -222,7 +228,7 @@
       }
 
       function networkError() {
-        $('.message').append('<p>通信が切断されました。ネットワークの接続をご確認ください。</p>')
+        $('.message').append('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>')
       }
     })
   </script>
