@@ -91,6 +91,14 @@
     // </div>
 
     $(function () {
+      
+      $('.search__btn').on('click', function () {
+        $('ul').empty();
+        var search = $('.search__text__input').val();
+        var current = 1;
+        var hits = 20;
+        getDataBooks(search, hits, current);
+      })
 
       function getDataBooks(keyword, hits, page) {
         $.ajax({
@@ -104,12 +112,23 @@
             page: page
           }
         }).done(function (data) {
+          console.log(data);
           success(data);
-          pagination(data);
-          $('a').on('click', function (e) {
-            e.preventDefault();
-          })
-          pagePrev(page)
+          if (data.pageCount > 1) {
+            pagination(data);
+            $('a').on('click', function (e) {
+              e.preventDefault();
+            })
+            pageMove(keyword, hits, page);
+            pageDisabled(page, data);
+          }
+          if (data.count === 0) {
+            dataNone();
+          }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          badRequest();
+          overRequest();
+          networkError();
         })
       }
 
@@ -146,26 +165,65 @@
         )
       }
 
-      function pagePrev(current) {
-        $('.btn-item').on('click', function () {
+      function pageMove(keyword, hits, page) {
+        $('.btn-item').on('click', function() {
           $('ul').empty();
           if ($(this).data('js') === 'page-prev') {
-            current += 1;
-            return current;
+            pagePrev(keyword, hits, page);
+          } else if ($(this).data('js') === 'page-next') {
+            pageNext(keyword, hits, page);
           }
-
-          console.log(current);
         })
       }
 
-      $('.search__btn').on('click', function () {
-        var search = $('.search__text__input').val();
-        var current = 1;
-        const HITS = 20;
+      function pageNext(keyword, hits, page) {
+        page += 1
+        getDataBooks(keyword, hits, page);
+      }
 
-        getDataBooks(search, HITS, current)
+      function pagePrev(keyword, hits, page) {
+        page -= 1;
+        getDataBooks(keyword, hits, page);
+      }
 
-      })
+      function pageDisabled(page, data) {
+        if (page === 1) {
+          pagePrevDisabled();
+        } else if (page === data.pageCount) {
+          pageNextDisabled();
+        }
+      }
+
+      function pagePrevDisabled () {
+        $('.btn-item').filter(function() {
+          return $(this).data('js') === 'page-prev';
+        }).addClass('disabled')
+          .css('pointer-events', 'none');
+      }
+
+      function pageNextDisabled () {
+        $('.btn-item').filter(function() {
+          return $(this).data('js') === 'page-next';
+        }).addClass('disabled')
+          .css('pointer-events', 'none');
+      }
+
+      function dataNone() {
+        $('.message').append('<p>検索結果が見つかりませんでした。</p>'
+                              + '<p>別のキーワードで検索してください。</p>');
+      }
+
+      function badRequest() {
+        $('.message').append('<p>検索文字が入力されていません。</p>');
+      }
+
+      function overRequest() {
+        $('.message').append('<p>リクエスト過多です。しばらく時間をおいてからお試しください。</p>');
+      }
+
+      function networkError() {
+        $('.message').append('<p>通信が切断されました。ネットワークの接続をご確認ください。</p>')
+      }
     })
   </script>
 </body>
