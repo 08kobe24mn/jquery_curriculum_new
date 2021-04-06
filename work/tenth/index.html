@@ -107,7 +107,7 @@
 
       function getDataBooks(keyword, hits, page) {
         $.ajax({
-          url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?[parameter]=[value]…',
+          url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
           type: 'GET',
           dataType: 'json',
           data: {
@@ -117,55 +117,46 @@
             page: page
           }
         }).done(function (data) {
-          success(data);
-          if (data.pageCount > 1) {
-            pagination(data);
-            pageMove(keyword, hits, page);
-            pageDisabled(page, data);
-          }
+          bookData(data);
+          pagination(data);
+          pageMove(keyword, hits, page);
+          pageDisabled(page, data);
           if (data.count === 0) {
             dataNone();
           }
         }).fail(function(error) {
-          if (error.status === 400) {
-            badRequest();
-          } else if (error.status === 429) {
-            overRequest();
-          } else if (error.status === 0) {
-            networkError();
-          }
+          console.log(error);
+          errorMessage(error);
         })
       }
 
-      function success(data) {
-        for (var i = 0; i <= data.hits; i++) {
-          $.each(data.Items[i], function (index, value) {
-            $('ul').append(
-              '<li class="lists__item">' +
+      function bookData(data) {
+        $.each(data.Items, function (index, value) {
+          $('ul').append(
+            '<li class="lists__item">' +
               '<div class="lists__item__inner">' +
-              '<a href="' + value.itemUrl + '" class="lists__item__link" target="_blank">' +
-              '<img src="' + value.largeImageUrl + '" class="lists__item__img" alt="商品画像">' +
-              '<p class="lists__item__detail">作品名：' + value.title + '</p>' +
-              '<p class="lists__item__detail">作者　：' + value.author + '</p>' +
-              '<p class="lists__item__detail">出版社：' + value.publisherName + '</p>' +
-              '</a>' +
+                '<a href="' + value.Item.itemUrl + '" class="lists__item__link" target="_blank">' +
+                '<img src="' + value.Item.largeImageUrl + '" class="lists__item__img" alt="商品画像">' +
+                '<p class="lists__item__detail">作品名：' + value.Item.title + '</p>' +
+                '<p class="lists__item__detail">作者　：' + value.Item.author + '</p>' +
+                '<p class="lists__item__detail">出版社：' + value.Item.publisherName + '</p>' +
+                '</a>' +
               '</div>' +
-              '</li>'
-            )
-          })
-        }
+            '</li>'
+          )
+        })
       }
 
       function pagination(data) {
         $('ul').append(
           '<div class="pager" data-js="pager">' +
-          '<div class="counter">' +
-          '<span class="counter-current">' + data.page + '</span>/<span class="counter-all">' + data.pageCount + '</span>' +
-          '</div>' +
-          '<div class="btn-wrapper">' +
-          '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
-          '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
-          '</div>' +
+            '<div class="counter">' +
+              '<span class="counter-current">' + data.page + '</span>/<span class="counter-all">' + data.pageCount + '</span>' +
+            '</div>' +
+            '<div class="btn-wrapper">' +
+              '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+              '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+            '</div>' +
           '</div>'
         )
       }
@@ -182,21 +173,27 @@
         })
       }
 
-      function pageNext(keyword, hits, page) {
-        page += 1
-        getDataBooks(keyword, hits, page);
-      }
-
+      
       function pagePrev(keyword, hits, page) {
         page -= 1;
         getDataBooks(keyword, hits, page);
       }
-
+      
+      function pageNext(keyword, hits, page) {
+        page += 1
+        getDataBooks(keyword, hits, page);
+      }
+      
       function pageDisabled(page, data) {
-        if (page === 1) {
+        if (data.pageCount === 1) {
           pagePrevDisabled();
-        } else if (page === data.pageCount) {
           pageNextDisabled();
+        } else {
+          if (page === 1) {
+            pagePrevDisabled();
+          } else if (page === data.pageCount) {
+            pageNextDisabled();
+          }
         }
       }
 
@@ -215,20 +212,27 @@
       }
 
       function dataNone() {
-        $('.message').append('<p>検索結果が見つかりませんでした。</p>'
-                              + '<p>別のキーワードで検索してください。</p>');
+        pageEmpty()
+        $('.message').append('<p>検索結果が見つかりませんでした。</p>' + 
+                             '<p>別のキーワードで検索してください。</p>');
       }
 
-      function badRequest() {
-        $('.message').append('<p>検索文字が入力されていません。</p>');
-      }
-
-      function overRequest() {
-        $('.message').append('<p>リクエスト過多です。しばらく時間をおいてからお試しください。</p>');
-      }
-
-      function networkError() {
-        $('.message').append('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>')
+      function errorMessage(error) {
+        var message = $('.message');
+        switch (error.status) {
+          case 400:
+            message.append('<p>検索文字が入力されていません。</p>');
+            break;
+          case 429:
+            message.append('<p>リクエスト過多です。しばらく時間をおいてからお試しください。</p>');
+            break;
+          case 0:
+            message.append('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
+            break;
+          default:
+            message.append('<p>エラーが発生しました。</p>' + 
+                             '<p>理由：' + error.responseText + '</p>')
+        }
       }
     })
   </script>
