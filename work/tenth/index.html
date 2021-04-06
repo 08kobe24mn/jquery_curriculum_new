@@ -92,15 +92,32 @@
 
     $(function () {
       
-      $('.search__btn').on('click', function () {
-        pageEmpty();
-        var search = $('.search__text__input').val();
-        var current = 1;
-        var hits = 20;
-        getDataBooks(search, hits, current);
+      var search = '';
+      var current = null;
+      var HITS = 20;
+      
+      $('button').data('js','search-btn').on('click', function () {
+        emptyPage();
+        search = $('input').data('js', 'search-word').val();
+        current = 1;
+        getDataBooks(search, HITS, current);
       })
 
-      function pageEmpty() {
+      $(document).on('click', '[data-js="page-next"]', function(e) {
+        emptyPage();
+        e.preventDefault();
+        current += 1;
+        getDataBooks(search, HITS, current);
+      })
+
+      $(document).on('click', '[data-js="page-prev"]', function(e) {
+        emptyPage();
+        e.preventDefault();
+        current -= 1;
+        getDataBooks(search, HITS, current);
+      })
+
+      function emptyPage() {
         $('ul').empty();
         $('.message').empty();
       }
@@ -117,37 +134,36 @@
             page: page
           }
         }).done(function (data) {
-          bookData(data);
-          pagination(data);
-          pageMove(keyword, hits, page);
-          pageDisabled(page, data);
           if (data.count === 0) {
             dataNone();
+            return;
           }
+          showBookData(data);
+          showPagination(data);
+          pageDisabled(page, data);
         }).fail(function(error) {
-          console.log(error);
           errorMessage(error);
         })
       }
 
-      function bookData(data) {
+      function showBookData(data) {
+        var listElement = '';
         $.each(data.Items, function (index, value) {
-          $('ul').append(
-            '<li class="lists__item">' +
-              '<div class="lists__item__inner">' +
-                '<a href="' + value.Item.itemUrl + '" class="lists__item__link" target="_blank">' +
+          listElement += '<li class="lists__item">' +
+            '<div class="lists__item__inner">' +
+              '<a href="' + value.Item.itemUrl + '" class="lists__item__link" target="_blank">' +
                 '<img src="' + value.Item.largeImageUrl + '" class="lists__item__img" alt="商品画像">' +
                 '<p class="lists__item__detail">作品名：' + value.Item.title + '</p>' +
                 '<p class="lists__item__detail">作者　：' + value.Item.author + '</p>' +
                 '<p class="lists__item__detail">出版社：' + value.Item.publisherName + '</p>' +
-                '</a>' +
-              '</div>' +
-            '</li>'
-          )
+              '</a>' +
+            '</div>' +
+          '</li>'
         })
+        $('ul').append(listElement);
       }
 
-      function pagination(data) {
+      function showPagination(data) {
         $('ul').append(
           '<div class="pager" data-js="pager">' +
             '<div class="counter">' +
@@ -161,29 +177,6 @@
         )
       }
 
-      function pageMove(keyword, hits, page) {
-        $('.btn-item').on('click', function(e) {
-          pageEmpty();
-          e.preventDefault();
-          if ($(this).data('js') === 'page-prev') {
-            pagePrev(keyword, hits, page);
-          } else if ($(this).data('js') === 'page-next') {
-            pageNext(keyword, hits, page);
-          }
-        })
-      }
-
-      
-      function pagePrev(keyword, hits, page) {
-        page -= 1;
-        getDataBooks(keyword, hits, page);
-      }
-      
-      function pageNext(keyword, hits, page) {
-        page += 1
-        getDataBooks(keyword, hits, page);
-      }
-      
       function pageDisabled(page, data) {
         if (data.pageCount === 1) {
           pagePrevDisabled();
@@ -198,21 +191,21 @@
       }
 
       function pagePrevDisabled () {
-        $('.btn-item').filter(function() {
+        $('a').filter(function() {
           return $(this).data('js') === 'page-prev';
         }).addClass('disabled')
           .css('pointer-events', 'none');
       }
 
       function pageNextDisabled () {
-        $('.btn-item').filter(function() {
+        $('a').filter(function() {
           return $(this).data('js') === 'page-next';
         }).addClass('disabled')
           .css('pointer-events', 'none');
       }
 
       function dataNone() {
-        pageEmpty()
+        emptyPage()
         $('.message').append('<p>検索結果が見つかりませんでした。</p>' + 
                              '<p>別のキーワードで検索してください。</p>');
       }
