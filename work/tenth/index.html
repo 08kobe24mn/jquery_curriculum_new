@@ -104,6 +104,9 @@
       })
 
       $(document).on('click', '[data-js="page-next"]', function(e) {
+        if ($(this).attr('class') === 'btn-item disabled') {
+          return false;
+        }
         emptyPage();
         e.preventDefault();
         current += 1;
@@ -111,6 +114,9 @@
       })
 
       $(document).on('click', '[data-js="page-prev"]', function(e) {
+        if ($(this).attr('class') === 'btn-item disabled') {
+          return false;
+        }
         emptyPage();
         e.preventDefault();
         current -= 1;
