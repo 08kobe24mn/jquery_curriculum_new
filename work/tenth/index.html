@@ -95,12 +95,12 @@
       var search = '';
       var current = null;
       var HITS = 20;
-      var firstPage = 1;
+      var FIRST_PAGE = 1;
       
       $('[data-js="search-btn"]').on('click', function() {
         emptyPage();
         search = $('[data-js="search-word"]').val();
-        current = firstPage;
+        current = FIRST_PAGE;
         getDataBooks();
       })
 
@@ -186,7 +186,7 @@
       }
 
       function pageDisabled(data) {
-        if (current === 1) {
+        if (current === FIRST_PAGE) {
           $('[data-js="page-prev"]').addClass('disabled')
         }
         if (current === data.pageCount) {
