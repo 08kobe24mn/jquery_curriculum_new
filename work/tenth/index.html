@@ -95,32 +95,33 @@
       var search = '';
       var current = null;
       var HITS = 20;
+      var firstPage = 1;
       
-      $('button').data('js','search-btn').on('click', function () {
+      $('[data-js="search-btn"]').on('click', function() {
         emptyPage();
-        search = $('input').data('js', 'search-word').val();
-        current = 1;
-        getDataBooks(search, HITS, current);
+        search = $('[data-js="search-word"]').val();
+        current = firstPage;
+        getDataBooks();
       })
 
       $(document).on('click', '[data-js="page-next"]', function(e) {
+        e.preventDefault();
         if ($(this).attr('class') === 'btn-item disabled') {
           return false;
         }
         emptyPage();
-        e.preventDefault();
-        current += 1;
-        getDataBooks(search, HITS, current);
+        current++;
+        getDataBooks();
       })
 
       $(document).on('click', '[data-js="page-prev"]', function(e) {
+        e.preventDefault();
         if ($(this).attr('class') === 'btn-item disabled') {
           return false;
         }
         emptyPage();
-        e.preventDefault();
-        current -= 1;
-        getDataBooks(search, HITS, current);
+        current--;
+        getDataBooks();
       })
 
       function emptyPage() {
@@ -128,16 +129,16 @@
         $('.message').empty();
       }
 
-      function getDataBooks(keyword, hits, page) {
+      function getDataBooks() {
         $.ajax({
           url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
           type: 'GET',
           dataType: 'json',
           data: {
             applicationId: appId,
-            keyword: keyword,
-            hits: hits,
-            page: page
+            keyword: search,
+            hits: HITS,
+            page: current
           }
         }).done(function (data) {
           if (data.count === 0) {
@@ -146,7 +147,6 @@
           }
           showBookData(data);
           showPagination(data);
-          pageDisabled(page, data);
         }).fail(function(error) {
           errorMessage(error);
         })
@@ -181,54 +181,40 @@
             '</div>' +
           '</div>'
         )
+
+        pageDisabled(data);
       }
 
-      function pageDisabled(page, data) {
-        if (data.pageCount === 1) {
-          pagePrevDisabled();
-          pageNextDisabled();
-        } else {
-          if (page === 1) {
-            pagePrevDisabled();
-          } else if (page === data.pageCount) {
-            pageNextDisabled();
-          }
+      function pageDisabled(data) {
+        if (current === 1) {
+          $('[data-js="page-prev"]').addClass('disabled')
         }
-      }
-
-      function pagePrevDisabled () {
-        $('a').filter(function() {
-          return $(this).data('js') === 'page-prev';
-        }).addClass('disabled')
-      }
-
-      function pageNextDisabled () {
-        $('a').filter(function() {
-          return $(this).data('js') === 'page-next';
-        }).addClass('disabled')
+        if (current === data.pageCount) {
+          $('[data-js="page-next"]').addClass('disabled')
+        }
       }
 
       function dataNone() {
         emptyPage()
-        $('.message').append('<p>検索結果が見つかりませんでした。</p>' + 
-                             '<p>別のキーワードで検索してください。</p>');
+        $('.message').append('検索結果が見つかりませんでした。<br>' + 
+                             '別のキーワードで検索してください。');
       }
 
       function errorMessage(error) {
         var message = $('.message');
         switch (error.status) {
           case 400:
-            message.append('<p>検索文字が入力されていません。</p>');
+            message.append('検索文字が入力されていません。');
             break;
           case 429:
-            message.append('<p>リクエスト過多です。しばらく時間をおいてからお試しください。</p>');
+            message.append('リクエスト過多です。しばらく時間をおいてからお試しください。');
             break;
           case 0:
-            message.append('<p>通信に失敗しました。インターネットの接続をご確認ください。</p>');
+            message.append('通信に失敗しました。インターネットの接続をご確認ください。');
             break;
           default:
-            message.append('<p>エラーが発生しました。</p>' + 
-                             '<p>理由：' + error.responseText + '</p>')
+            message.append('エラーが発生しました。<br>' + 
+                             '理由：' + error.responseText)
         }
       }
     })
